@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "dgSpecHash": "cvqxjLAWQrZSXfrooncKJqdv9Wjxfdw6vXSIph+Th4FrNJiJGzjraSX1sNK+oGa7pralEVOpSj/xvTE7bOBHcQ==",
+  "success": true,
+  "projectFilePath": "E:\\УНИВЕР\\АКГ\\ACGLab\\ACGLab\\ACGLab.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\feopl\\.nuget\\packages\\microsoft.netcore.platforms\\5.0.0\\microsoft.netcore.platforms.5.0.0.nupkg.sha512",
+    "C:\\Users\\feopl\\.nuget\\packages\\microsoft.win32.systemevents\\5.0.0\\microsoft.win32.systemevents.5.0.0.nupkg.sha512",
+    "C:\\Users\\feopl\\.nuget\\packages\\system.drawing.common\\5.0.2\\system.drawing.common.5.0.2.nupkg.sha512"
+  ],
+  "logs": []
+}
