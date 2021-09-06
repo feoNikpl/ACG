@@ -9,6 +9,6 @@
         MouseWheel="Canvas_MouseWheel"
         KeyDown="Window_KeyDown">
     <Grid>
-        <Image x:Name="Canvas" Height="800" Width="1200" Margin="0,0" />
+        <Image Source="{Binding Path=bitmap}" />
     </Grid>
 </Window>
