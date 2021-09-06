@@ -8,6 +8,7 @@ using ACGLab.Transformation;
 using System.IO;
 using System.Drawing;
 using Color = System.Drawing.Color;
+using System.Numerics;
 
 namespace ACGLab
 {
@@ -20,13 +21,16 @@ namespace ACGLab
         float Zoom = 1.0f;
         int X = 0, Y = 0, Z = 0;
         float Ox = 0, Oy = 0, Oz = 0;
+        float CameraSpeed = 0.05f;
+        Vector3 CamPos = new Vector3(1.0f, 1.0f, 1.0f), CamTarget = new Vector3(0.0f, 0.0f, 0.0f), CamUp = new Vector3(0.0f, 1.0f, 0.0f);
+        Vector3 SpeedVecOx = new Vector3(1f, 0f, 0f);
+        Vector3 SpeedVecOy = new Vector3(0f, 1f, 0f);
+        Vector3 SpeedVecOz = new Vector3(0f, 0f, 1f);
 
         Bitmap bitmap;
         public MainWindow()
         {
             InitializeComponent();
-            X = 100;
-            Y = -100;
             bitmap = new Bitmap((int)Width, (int)Height);
             Draw();
 
@@ -36,7 +40,7 @@ namespace ACGLab
         private void Draw()
         {
             bitmap = ClearBitmap(bitmap, Color.White);
-            double[,] a = Transformation.Transformation.GetTransformationMatrix(Zoom, X, Y, Z, Ox, Oy, Oz);
+            double[,] a = Transformation.Transformation.GetTransformationMatrix(CamPos, CamTarget, CamUp, Width, Height, 0.0f, 1.0f, Zoom, X, Y, Z, Ox, Oy, Oz);
             foreach (Polygon p in drawingObject.Instance)
             {
                 bitmap = DrawPolygon(bitmap, p, a);
@@ -128,16 +132,16 @@ namespace ACGLab
             switch (e.Key)
             {
                 case Key.Right:
-                    X += 50;
+                    X += 10;
                     break;
                 case Key.Left:
-                    X -= 50;
+                    X -= 10;
                     break;
                 case Key.Up:
-                    Y += 50;
+                    Y += 10;
                     break;
                 case Key.Down:
-                    Y -= 50;
+                    Y -= 10;
                     break;
                 case Key.Z:
                     if (Ox < 2f)
@@ -169,28 +173,21 @@ namespace ACGLab
                         Oz = 0;
                     }
                     break;
+                case Key.W:
+                    CamPos += SpeedVecOz;
+                    break;
+                case Key.S:
+                    CamPos -= SpeedVecOz;
+                    break;
+                case Key.A:
+                    CamPos -= SpeedVecOx;
+                    break;
+                case Key.D:
+                    CamPos += SpeedVecOx;
+                    break;
             }
             Draw();
         }
-        /*public void GetNewVertex()
-{
-int Znear = 600;
-int Zfar = 800;
-
-double[,] Viewport = { { Width/2, 0, 0, 10 + Width/2},
-{ 0, -Height/2, 0, 15 + Height/2 },
-{ 0, 0, 1, 0 },
-{ 0, 0, 0, 1 } };
-double[,] Projection = {  };
-double[,] b = {  };
-double[,] d = {  };
-
-double[,] c = Multiplication(Multiplication(a,d),Projection);
-for (int i = 0; i < drawingObject.Vertex.Length; i++)
-drawingObject.Vertex[i] = Multiplication(a, drawingObject.Vertex[i]);
-}*/
-
-
     }
 
     
