@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Numerics;
 using System.Text;
 
 namespace ACGLab.Model
@@ -19,9 +20,9 @@ namespace ACGLab.Model
             W = w;
         }
 
-        public double[] ToArray()
+        public Vector4 ToVector()
         {
-            return new double[4] { X, Y, Z, W };
+            return new Vector4( (float)X, (float)Y, (float)Z, (float)W );
 
         }
 

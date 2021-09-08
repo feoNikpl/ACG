@@ -7,104 +7,50 @@ namespace ACGLab.Transformation
 {
     public class Transformation
     {
-        public static double[,] GetTransformationMatrix(Vector3 camPos, Vector3 camTarget, Vector3 camUp, double width, double height, 
+        public static Matrix4x4 GetTransformationMatrix(Vector3 camPos, Vector3 camTarget, Vector3 camUp, double width, double height, 
                                                         float zNear, float zFar, float zoom, int x, int y, int z, 
                                                         float ox, float oy, float oz)
         {
-            return MatrixMath.Multiplication(
-                MatrixMath.Multiplication(
-                    MatrixMath.Multiplication(
-                        GetViewportMatrix(width, height), 
-                        GetProjectionMatrix(width, height, zNear, zFar)), 
-                    GetViewMatrix(camPos, camTarget,camUp)), 
-                GetModelMatrix(zoom, x, y, z, ox, oy, oz));
+            var aspect = (float)(width / height);
+            var fov = (float)Math.PI * (45) / 180;
+
+            return Matrix4x4.CreateScale(zoom) *
+            Matrix4x4.CreateRotationX((float)(ox * Math.PI)) *
+            Matrix4x4.CreateRotationY((float)(oy * Math.PI)) *
+            Matrix4x4.CreateRotationZ((float)(oz * Math.PI)) *
+            Matrix4x4.CreateTranslation(x, y, z) *
+            Matrix4x4.CreateLookAt(camPos,camTarget,camUp) *
+            Matrix4x4.CreatePerspectiveFieldOfView(fov, aspect,zNear,zFar);
         }
 
-        private static double[,] GetModelMatrix(float zoom, int x, int y, int z, float ox, float oy, float oz)
+        
+        public static Matrix4x4 GetViewportMatrix(double width, double height)
         {
-            return MatrixMath.Multiplication(
-                MatrixMath.Multiplication(GetZoomMatrix(zoom), GetTranslationMatrix(x, y, z)),
-                GetTurnMatrix(ox, oy, oz));
+            return Matrix4x4.Transpose(new Matrix4x4((float)width / 2, 0, 0, (float)width / 2, 0, (float)-height / 2, 0, (float)height / 2, 0, 0, 1, 0, 0, 0, 0, 1));
         }
+        
+        private static Matrix4x4 GetProjectionMatrix(double width, double height,float zNear, float zFar)
+        {
+            var aspect = (float)(width / height); 
+            var fov = (float)Math.PI * (45) / 180; 
 
-        private static double[,] GetTurnMatrix(float ox, float oy, float oz)
-        {
-            return MatrixMath.Multiplication
-                (GetTurnOXMatrix(ox), MatrixMath.Multiplication(GetTurnOYMatrix(oy),GetTurnOZMatrix(oz)));
-        }
+            var m00 = 1 / (aspect * (float)Math.Tan(fov / 2));
+            var m11 = 1 / (float)Math.Tan(fov / 2);
+            var m22 = zFar / (zNear - zFar);
+            var m23 = (zNear * zFar) / (zNear - zFar);
 
-        private static double[,] GetZoomMatrix(float zoom)
-        {
-            return new double[4,4]{
-                { zoom, 0, 0, 0},
-                { 0, zoom, 0, 0 },
-                { 0, 0, zoom, 0 },
-                { 0, 0, 0, 1 }
-            };
-        }
-        private static double[,] GetTranslationMatrix(int x, int y, int z)
-        {
-            return new double[4, 4]{
-                { 1, 0, 0, x},
-                { 0, 1, 0, y },
-                { 0, 0, 1, z },
-                { 0, 0, 0, 1 }
-            };
-        }
-        private static double[,] GetTurnOXMatrix(float ox)
-        {
-            return new double[4, 4]{
-                { 1, 0, 0, 0},
-                { 0, Math.Cos(ox * Math.PI), -Math.Sin(ox * Math.PI), 0 },
-                { 0, Math.Sin(ox * Math.PI), Math.Cos(ox * Math.PI), 0},
-                { 0, 0, 0, 1 }
-            };
-        }
-        private static double[,] GetTurnOYMatrix(float oy)
-        {
-            return new double[4, 4]{
-                { Math.Cos(oy * Math.PI), 0, Math.Sin(oy * Math.PI), 0 },
-                { 0, 1, 0, 0},
-                { -Math.Sin(oy * Math.PI), 0, Math.Cos(oy * Math.PI), 0 },
-                { 0, 0, 0, 1 }
-            };
-        }
-        private static double[,] GetTurnOZMatrix(float oz)
-        {
-            return new double[4, 4]{
-                { Math.Cos(oz * Math.PI), -Math.Sin(oz * Math.PI), 0, 0 },
-                { Math.Sin(oz * Math.PI), Math.Cos(oz * Math.PI), 0, 0 },
-                { 0, 0, 1, 0},
-                { 0, 0, 0, 1 }
-            };
-        }
+            var projectionMatrix = new Matrix4x4(m00, 0, 0, 0,
+                                                   0, m11, 0, 0,
+                                                   0, 0, m22, m23,
+                                                   0, 0, -1, 0);
+            projectionMatrix.Translation = new Vector3(0, 0, m23);
+            projectionMatrix = Matrix4x4.CreatePerspectiveFieldOfView(
+                                            fov,
+                                            aspect,
+                                            zNear,
+                                            zFar);
 
-        private static double[,] GetViewMatrix(Vector3 eye, Vector3 target, Vector3 up)
-        {
-            Vector3 Zaxis = Vector3.Normalize(eye - target);
-            Vector3 Xaxis = Vector3.Normalize(Vector3.Cross(up, Zaxis));
-            Vector3 Yaxis = up;
-            return new double[4, 4]{ 
-                { Xaxis.X, Xaxis.Y, Xaxis.Z, -Vector3.Dot(Xaxis,eye) },
-                { Yaxis.X, Yaxis.Y, Yaxis.Z, -Vector3.Dot(Yaxis,eye) },
-                { Zaxis.X, Zaxis.Y, Zaxis.Z, -Vector3.Dot(Zaxis,eye) },
-                { 0, 0, 0, 1 },};
-        }
-        private static double[,] GetProjectionMatrix(double width, double height, float zNear, float zFar)
-        {
-            return new double[4, 4]{
-                { 2/width, 0, 0, 0 },
-                { 0, 2/height, 0, 0 },
-                { 0, 0, 1/(zNear-zFar), zNear/(zNear-zFar) },
-                { 0, 0, 0, 1 },};
-        }
-        private static double[,] GetViewportMatrix(double width, double height)
-        {
-            return new double[4, 4]{
-                { width/2, 0, 0, width/2 },
-                { 0, -height/2, 0, height/2 },
-                { 0, 0, 1, 0 },
-                { 0, 0, 0, 1 },};
+            return projectionMatrix;
         }
     }
 }

@@ -17,6 +17,7 @@ namespace ACGLab.FileParser
 
             string l;
             int skip = 1;
+            double maxX = 0, maxY = 0, maxZ = 0;
 
             using (var reader = new StreamReader(filePath, Encoding.UTF8))
             {
@@ -62,6 +63,18 @@ namespace ACGLab.FileParser
                                     break;
                                 default:
                                     break;
+                            }
+                            if (maxX < v[0])
+                            {
+                                maxX = v[0];
+                            }
+                            if (maxY < v[1])
+                            {
+                                maxY = v[1];
+                            }
+                            if (maxZ < v[2])
+                            {
+                                maxZ = v[2];
                             }
                             break;
                         case "vt":
@@ -115,8 +128,8 @@ namespace ACGLab.FileParser
                     }
                 }
             }
-
-            return new DrawingObject(instance);
+            
+            return new DrawingObject(instance, new System.Numerics.Vector3((float)maxX/2, (float)maxY /2, (float)maxZ /2));
         }
     }
 }

@@ -7,8 +7,9 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="800" Width="1200"
         MouseWheel="Canvas_MouseWheel"
-        KeyDown="Window_KeyDown">
-    <Grid>
+        KeyDown="Window_KeyDown"
+        Loaded="Window_Loaded">
+    <Grid Name="Grid1">
         <Image Source="{Binding Path=bitmap}" />
     </Grid>
 </Window>

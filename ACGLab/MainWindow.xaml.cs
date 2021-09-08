@@ -18,32 +18,34 @@ namespace ACGLab
     /// </summary>
     public partial class MainWindow : Window
     {
-        public DrawingObject drawingObject = FileParser.FileParser.ParseFile("C.obj");
+        public DrawingObject drawingObject = FileParser.FileParser.ParseFile("B.obj");
         float Zoom = 1.0f;
-        int X = 0, Y = 0, Z = 0;
+        int X = -10, Y = -10, Z = 0;
         float Ox = 0, Oy = 0, Oz = 0;
-        float CameraSpeed = 5.0f;
-        Vector3 CamPos = new Vector3(1.0f, 1.0f, 1.0f), CamTarget = new Vector3(0.0f, 0.0f, 0.0f), CamUp = new Vector3(0.0f, 1.0f, 0.0f);
-        Vector3 SpeedVecOx = new Vector3(1f, 0f, 0f);
-        Vector3 SpeedVecOy = new Vector3(0f, 1f, 0f);
-        Vector3 SpeedVecOz = new Vector3(0f, 0f, 1f);
+        float CameraSpeed = 0.05f;
+        Vector3 CamPos = new Vector3(0.0f, 0.0f, 50.0f), CamTarget = new Vector3(0.0f, 0.0f, 1.0f), CamUp = new Vector3(0.0f, 1.0f, 0.0f);
+
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            drawing.bitmap = new WriteableBitmap((int)Grid1.ActualWidth, (int)Grid1.ActualHeight, 96, 96, PixelFormats.Bgr32, null);
+            DataContext = drawing;
+            Draw();
+        }
+
         BitmapDrawing drawing = new BitmapDrawing();
 
         public MainWindow()
         {
             InitializeComponent();
-            drawing.bitmap = new WriteableBitmap((int)Width, (int)Height, 96, 96, PixelFormats.Bgr32, null);
-            DataContext = drawing;
-            Draw();
-
         }
 
 
         private void Draw()
         {
-            double dx, dy, x1, x2, y1, y2;
+            double dx = 0, dy = 0, x1, x2, y1, y2;
             int L;
-            double[,] transformMatrix = Transformation.Transformation.GetTransformationMatrix(CamPos, CamTarget, CamUp, Width, Height, 0.0f, 1.0f, Zoom, X, Y, Z, Ox, Oy, Oz);
+            Matrix4x4 viewport = Transformation.Transformation.GetViewportMatrix(Grid1.ActualWidth, Grid1.ActualHeight);
+            Matrix4x4 transformMatrix = Transformation.Transformation.GetTransformationMatrix(CamPos, CamTarget, CamUp, Grid1.ActualWidth, Grid1.ActualHeight, 1f, 100.0f, Zoom, X, Y, Z, Ox, Oy, Oz);
             try
             {
                 // Reserve the back buffer for updates.
@@ -57,33 +59,46 @@ namespace ACGLab
                             IntPtr pBackBuffer = drawing.bitmap.BackBuffer + (int)j * drawing.bitmap.BackBufferStride + (int)i * 4;
                             *((int*)pBackBuffer) = backColor;
                         }
-                            
-                    // Compute the pixel's color.
                     int color_data = Color.Black.ToArgb();
                     foreach (Polygon polygon in drawingObject.Instance)
                     {
-                        double[] point1, point2 = new double[4];
+                        Vector4 point1, point2;
                         for (int i = 0; i < polygon.Vertices.Count; i++)
                         {
                             if (i == polygon.Vertices.Count - 1)
                             {
-                                point1 = MatrixMath.Multiplication(transformMatrix, polygon.Vertices[0].ToArray());
+                                point1 = Vector4.Transform(polygon.Vertices[0].ToVector(), transformMatrix);
                             }
                             else
                             {
-                                point1 = MatrixMath.Multiplication(transformMatrix, polygon.Vertices[i].ToArray());
-                                point2 = MatrixMath.Multiplication(transformMatrix, polygon.Vertices[i + 1].ToArray());
+                                point1 = Vector4.Transform(polygon.Vertices[i+1].ToVector(), transformMatrix);
                             }
-                            x1 = point1[0];
-                            y1 = point1[1];
-                            x2 = point2[0];
-                            y2 = point2[1];
+                            point2 = Vector4.Transform(polygon.Vertices[i].ToVector(), transformMatrix);
+                            point1 /= point1.W;
+                            point2 /= point2.W;
+                            point1 = Vector4.Transform(point1, viewport);
+                            point2 = Vector4.Transform(point2, viewport);
+
+
+                            x1 = point1.X;
+                            y1 = point1.Y;
+                            x2 = point2.X;
+                            y2 = point2.Y;
+                            
                             L = (int)Math.Max(Math.Abs(x2 - x1), Math.Abs(y2 - y1));
-                            dx = (x2 - x1) / L;
-                            dy = (y2 - y1) / L;
+                            if (L == 0)
+                            {
+                                L = 1;
+                            }
+                            else
+                            {
+                                dx = (x2 - x1) / L;
+                                dy = (y2 - y1) / L;
+                            }
+                            
                             for (int k = 0; k <= L; k++)
                             {
-                                if (x1 > 0 && y1 > 0 && x1 < Width && y1 < Height)
+                                if (x1 > 0 && y1 > 0 && x1 < (int)Grid1.ActualWidth && y1 < (int)Grid1.ActualHeight)
                                 {
                                     IntPtr pBackBuffer = drawing.bitmap.BackBuffer + (int)y1 * drawing.bitmap.BackBufferStride + (int)x1 * 4;
                                     *((int*)pBackBuffer) = color_data;
@@ -91,7 +106,7 @@ namespace ACGLab
                                 x1 += dx;
                                 y1 += dy;
                             }
-                            if (x2 > 0 && y2 > 0 && x2 < Width && y2 < Height)
+                            if (x2 > 0 && y2 > 0 && x2 < (int)Grid1.ActualWidth-1 && y2 < (int)Grid1.ActualHeight-1)
                             {
                                 IntPtr pBackBuffer = drawing.bitmap.BackBuffer + (int)y2 * drawing.bitmap.BackBufferStride + (int)x2 * 4;
                                 *((int*)pBackBuffer) = color_data;
@@ -144,10 +159,16 @@ namespace ACGLab
                 case Key.Down:
                     Y -= 10;
                     break;
+                case Key.Q:
+                    Z -= 10;
+                    break;
+                case Key.E:
+                    Z += 10;
+                    break;
                 case Key.Z:
                     if (Ox < 2f)
                     {
-                        Ox += 0.1f;
+                        Ox += 0.05f;
                     }
                     else
                     {
@@ -157,7 +178,7 @@ namespace ACGLab
                 case Key.X:
                     if (Oy < 2f)
                     {
-                        Oy += 0.1f;
+                        Oy += 0.05f;
                     }
                     else
                     {
@@ -167,7 +188,7 @@ namespace ACGLab
                 case Key.C:
                     if (Oz < 2f)
                     {
-                        Oz += 0.1f;
+                        Oz += 0.05f;
                     }
                     else
                     {
@@ -175,16 +196,22 @@ namespace ACGLab
                     }
                     break;
                 case Key.W:
-                    CamPos += SpeedVecOz;
+                    CamPos.Z += CameraSpeed;
                     break;
                 case Key.S:
-                    CamPos -= SpeedVecOz;
+                    CamPos.Z -= CameraSpeed;
                     break;
                 case Key.A:
-                    CamPos -= SpeedVecOx;
+                    CamPos.X += CameraSpeed;
                     break;
                 case Key.D:
-                    CamPos += SpeedVecOx;
+                    CamPos.X -= CameraSpeed;
+                    break;
+                case Key.Space:
+                    CamPos.Y += CameraSpeed;
+                    break;
+                case Key.LeftShift:
+                    CamPos.Y -= CameraSpeed;
                     break;
             }
             Draw();
