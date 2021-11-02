@@ -10,6 +10,6 @@
         KeyDown="Window_KeyDown"
         Loaded="Window_Loaded">
     <Grid Name="Grid1">
-        <Image Source="{Binding Path=bitmap}" />
+        <Image Name="Image1"  Source="{Binding Path=bitmap}" />
     </Grid>
 </Window>

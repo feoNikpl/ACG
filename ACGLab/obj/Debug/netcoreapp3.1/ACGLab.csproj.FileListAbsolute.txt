@@ -23,3 +23,4 @@ E:\УНИВЕР\АКГ\ACGLab\ACGLab\bin\Debug\netcoreapp3.1\runtimes\win\lib\ne
 E:\УНИВЕР\АКГ\ACGLab\ACGLab\bin\Debug\netcoreapp3.1\runtimes\unix\lib\netcoreapp3.0\System.Drawing.Common.dll
 E:\УНИВЕР\АКГ\ACGLab\ACGLab\bin\Debug\netcoreapp3.1\runtimes\win\lib\netcoreapp3.0\System.Drawing.Common.dll
 E:\УНИВЕР\АКГ\ACGLab\ACGLab\obj\Debug\netcoreapp3.1\ACGLab.csproj.CopyComplete
+E:\УНИВЕР\АКГ\ACGLab\ACGLab\obj\Debug\netcoreapp3.1\ACGLab.GeneratedMSBuildEditorConfig.editorconfig

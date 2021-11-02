@@ -12,6 +12,7 @@ namespace ACGLab.FileParser
         public static DrawingObject ParseFile(string filePath)
         {
             List<Vertex> vertices = new List<Vertex>();
+            List<VertexNormal> verticesNormal = new List<VertexNormal>();
             List<Polygon> instance = new List<Polygon>();
             List<string> lines = new List<string>();
 
@@ -98,18 +99,18 @@ namespace ACGLab.FileParser
                             }*/
                             break;
                         case "vn":
-                            /*var vn = line.Split(' ')
+                            var vn = line.Split(' ')
                                 .Skip(1)
                                 .Select(vn => Double.Parse(vn.Replace('.', ',')))
                                 .ToArray();
                             switch (vn.Length)
                             {
                                 case 3:
-                                    vertexNormal.Add(new List<double>() { vn[0], vn[1], vn[2] });
+                                    verticesNormal.Add(new VertexNormal(vn[0], vn[1], vn[2]));
                                     break;
                                 default:
                                     break;
-                            }*/
+                            }
                             break;
                         case "f ":
                             var f = l.Split(' ')
@@ -117,11 +118,17 @@ namespace ACGLab.FileParser
                                 .Select(f => f.Split('/').Select(f => Int32.Parse(f)).ToArray())
                                 .ToArray();
                             var vert = new List<Vertex>();
+                            var vertN = new List<VertexNormal>();
                             for (int i = 0; i < f.Length; i++)
                             {
                                 vert.Add(vertices[f[i][0] - 1]);
+                                vertN.Add(verticesNormal[f[i][2] - 1]);
+                                if(vert.Count > 4)
+                                {
+                                    int k = 0;
+                                }
                             }
-                            instance.Add(new Polygon(vert));
+                            instance.Add(new Polygon(vert,vertN));
                             break;
                         default:
                             break;

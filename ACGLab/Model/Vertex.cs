@@ -25,13 +25,5 @@ namespace ACGLab.Model
             return new Vector4( (float)X, (float)Y, (float)Z, (float)W );
 
         }
-
-        public void FromArray(double[] arr)
-        {
-            X = arr[0];
-            Y = arr[1];
-            Z = arr[2];
-            W = arr[3];
-        }
     }
 }
