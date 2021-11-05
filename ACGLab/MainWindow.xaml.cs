@@ -157,59 +157,69 @@ namespace ACGLab
         }*/
         private void DrawTriangle(int color_data, Vector4 point1, Vector4 point2, Vector4 point3)
         {
-            Vector4 temp;
-            if (point1.Y == point2.Y && point1.Y == point3.Y)
+            double ax = point1.X - point2.X;
+            double ay = point1.Y - point2.Y;
+            double bx = point1.X - point3.X;
+            double by = point1.Y - point3.Y;
+            double cz = ax * by - ay * bx;
+            if (cz < 0)
             {
-                return;
-            }
-            if (point1.Y > point2.Y)
-            {
-                temp = point1;
-                point1 = point2;
-                point2 = temp;
-            }
-            if (point1.Y > point3.Y)
-            {
-                temp = point1;
-                point1 = point3;
-                point3 = temp;
-            }
-            if (point2.Y > point3.Y)
-            {
-                temp = point2;
-                point2 = point3;
-                point3 = temp;
-            }
-            float totalHeight = point3.Y - point1.Y;
-            for (int i = 0; i < totalHeight; i++)
-            {
-                bool secondHalf = i > point2.Y - point1.Y || point2.Y == point1.Y;
-                float segmentHeight = secondHalf ? point3.Y - point2.Y : point2.Y - point1.Y;
-                double alpha = (double)i / totalHeight;
-                double beta = (double)(i - (secondHalf ? point2.Y - point1.Y : 0)) / segmentHeight;
-                Vector4 a = point1 + (point3 - point1) * (float)alpha;
-                Vector4 b = secondHalf
-                        ? point2 + (point3 - point2) * (float)beta
-                        : point1 + (point2 - point1) * (float)beta;
-                if (a.X > b.X)
+                Vector4 temp;
+                if (point1.Y == point2.Y && point1.Y == point3.Y)
                 {
-                    temp = a;
-                    a = b;
-                    b = temp;
+                    return;
                 }
-                for (int j = (int)a.X; j <= b.X; j++)
+                if (point1.Y > point2.Y)
                 {
-                    double phi = b.X == a.X
-                            ? 1d
-                            : (double)(j - a.X) / (double)(b.X - a.X);
-                    float z = (float)(a.Z + (b.Z - a.Z) * phi);
-                    int idx = (int)(j * Grid1.ActualHeight + point1.Y + i);
-                    if (j > 0 && point1.Y + i > 0 && j < (int)Grid1.ActualWidth && point1.Y + i < (int)Grid1.ActualHeight) 
+                    temp = point1;
+                    point1 = point2;
+                    point2 = temp;
+                }
+                if (point1.Y > point3.Y)
+                {
+                    temp = point1;
+                    point1 = point3;
+                    point3 = temp;
+                }
+                if (point2.Y > point3.Y)
+                {
+                    temp = point2;
+                    point2 = point3;
+                    point3 = temp;
+                }
+                point3.Y += 1;
+                point1.Y -= 1;
+                float totalHeight = point3.Y - point1.Y;
+                for (int i = 0; i < totalHeight; i++)
+                {
+                    bool secondHalf = i > point2.Y - point1.Y || point2.Y == point1.Y;
+                    float segmentHeight = secondHalf ? point3.Y - point2.Y : point2.Y - point1.Y;
+                    double alpha = (double)i / totalHeight;
+                    double beta = (double)(i - (secondHalf ? point2.Y - point1.Y : 0)) / segmentHeight;
+                    Vector4 a = point1 + (point3 - point1) * (float)alpha;
+                    Vector4 b = secondHalf
+                            ? point2 + (point3 - point2) * (float)beta
+                            : point1 + (point2 - point1) * (float)beta;
+                    if (a.X > b.X)
                     {
-                        if (ZBuffer[idx] >= z)
+                        temp = a;
+                        a = b;
+                        b = temp;
+                    }
+                    for (int j = (int)a.X; j <= b.X; j++)
+                    {
+                        double phi = b.X == a.X
+                                ? 1d
+                                : (double)(j - a.X) / (double)(b.X - a.X);
+                        float z = (float)(a.Z + (b.Z - a.Z) * phi);
+                        int idx = (int)(j * Grid1.ActualHeight + point1.Y + i);
+                        if (j > 0 && point1.Y + i > 0 && j < (int)Grid1.ActualWidth && point1.Y + i < (int)Grid1.ActualHeight)
                         {
-                            Bitmap[idx] = color_data;
-                            ZBuffer[idx] = z;
+                            if (ZBuffer[idx] >= z)
+                            {
+                                Bitmap[idx] = color_data;
+                                ZBuffer[idx] = z;
+                            }
                         }
                     }
                 }

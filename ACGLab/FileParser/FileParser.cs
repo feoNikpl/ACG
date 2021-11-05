@@ -113,10 +113,11 @@ namespace ACGLab.FileParser
                             }
                             break;
                         case "f ":
-                            var f = l.Split(' ')
-                                .Skip(1)
-                                .Select(f => f.Split('/').Select(f => Int32.Parse(f)).ToArray())
-                                .ToArray();
+                            var f = line.Split(' ')
+                                    .Skip(1)
+                                    .Select(c => c.Split('/'))
+                                    .Select(c => c.Select(a => Int32.TryParse(a, out int res) ? res : 0).ToArray())
+                                    .ToArray();
                             var vert = new List<Vertex>();
                             var vertN = new List<VertexNormal>();
                             for (int i = 0; i < f.Length; i++)
