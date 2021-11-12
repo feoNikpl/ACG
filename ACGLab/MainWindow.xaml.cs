@@ -53,6 +53,7 @@ namespace ACGLab
             ZBuffer = Enumerable.Repeat(float.MaxValue, ZBuffer.Length).ToArray();
             Matrix4x4 viewport = Transformation.Transformation.GetViewportMatrix(Grid1.ActualWidth, Grid1.ActualHeight);
             Matrix4x4 transformMatrix = Transformation.Transformation.GetTransformationMatrix(CamPos, CamTarget, CamUp, Grid1.ActualWidth, Grid1.ActualHeight, 1f, 100.0f, Zoom, X, Y, Z, Ox, Oy, Oz);
+            Matrix4x4 trnaslationMatrix = Transformation.Transformation.GetTranslationMatrix(Zoom, X, Y, Z, Ox, Oy, Oz);
             try
             {
                 // Reserve the back buffer for updates.
@@ -71,8 +72,7 @@ namespace ACGLab
                             point /= point.W;
                             points.Add(Vector4.Transform(point, viewport));
 
-                            normal = Vector4.Transform(polygon.VerticesNormal[i].ToVector(), transformMatrix);
-                            normal /= normal.W;
+                            normal = Vector4.Transform(polygon.VerticesNormal[i].ToVector(), trnaslationMatrix);
                             normals.Add(normal);
                         }
                         color_data = CalcColor(points, normals, new Vector4(CamPos, 1));
@@ -162,7 +162,7 @@ namespace ACGLab
             double bx = point1.X - point3.X;
             double by = point1.Y - point3.Y;
             double cz = ax * by - ay * bx;
-            if (cz < 0)
+            if (cz >= 0)
             {
                 Vector4 temp;
                 if (point1.Y == point2.Y && point1.Y == point3.Y)

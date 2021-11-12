@@ -28,6 +28,15 @@ namespace ACGLab.Transformation
         {
             return Matrix4x4.Transpose(new Matrix4x4((float)width / 2, 0, 0, (float)width / 2, 0, (float)-height / 2, 0, (float)height / 2, 0, 0, 1, 0, 0, 0, 0, 1));
         }
+
+        public static Matrix4x4 GetTranslationMatrix(float zoom, int x, int y, int z, float ox, float oy, float oz)
+        {
+            return Matrix4x4.CreateScale(zoom) *
+            Matrix4x4.CreateRotationX((float)(ox * Math.PI)) *
+            Matrix4x4.CreateRotationY((float)(oy * Math.PI)) *
+            Matrix4x4.CreateRotationZ((float)(oz * Math.PI)) *
+            Matrix4x4.CreateTranslation(x, y, z);
+        }
         
         private static Matrix4x4 GetProjectionMatrix(double width, double height,float zNear, float zFar)
         {

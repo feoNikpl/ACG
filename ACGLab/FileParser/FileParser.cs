@@ -124,6 +124,7 @@ namespace ACGLab.FileParser
                             {
                                 vert.Add(vertices[f[i][0] - 1]);
                                 vertN.Add(verticesNormal[f[i][2] - 1]);
+                                
                                 if(vert.Count > 4)
                                 {
                                     int k = 0;
