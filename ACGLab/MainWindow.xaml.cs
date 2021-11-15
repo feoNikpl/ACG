@@ -20,12 +20,14 @@ namespace ACGLab
     /// </summary>
     public partial class MainWindow : Window
     {
-        public DrawingObject drawingObject = FileParser.FileParser.ParseFile("radio.obj");
+        public DrawingObject drawingObject = FileParser.FileParser.ParseFile("C.obj");
         float Zoom = 1.0f;
         int X = -10, Y = -10, Z = 0;
         float Ox = 0, Oy = 0, Oz = 0;
         float CameraSpeed = 1.0f;
-        Vector3 CamPos = new Vector3(0.0f, 0.0f, 50.0f), CamTarget = new Vector3(0.0f, 0.0f, 1.0f), CamUp = new Vector3(0.0f, 1.0f, 0.0f);
+        Vector4 LightTarget = new Vector4(0.0f, 0.0f, -50.0f, 1);
+        Vector3 CamPos = new Vector3(0.0f, 0.0f, 45.0f), CamTarget = new Vector3(0.0f, 0.0f, 1.0f), CamUp = new Vector3(0.0f, 1.0f, 0.0f);
+        Vector3 origlightPoint = new Vector3(-1.08f, -1.26f, 45f);
         int[] Bitmap;
         float[] ZBuffer;
 
@@ -72,22 +74,25 @@ namespace ACGLab
                             point /= point.W;
                             points.Add(Vector4.Transform(point, viewport));
 
-                            normal = Vector4.Transform(polygon.VerticesNormal[i].ToVector(), trnaslationMatrix);
+                            normal = Vector4.Transform(polygon.VerticesNormal[i].ToVector(), transformMatrix);
+                            normal /= normal.W;
                             normals.Add(normal);
                         }
-                        color_data = CalcColor(points, normals, new Vector4(CamPos, 1));
+                        color_data = CalcColor(points, normals, LightTarget);
+                        //Vector4 Camr = Vector4.Transform(new Vector4(CamPos, 1), wm);
+                        Vector4 Camr = new Vector4(CamPos, 1);
                         if (polygon.Vertices.Count > 3)
                         {
-                            DrawTriangle(color_data, points[0], points[1], points[2]);
-                            DrawTriangle(color_data, points[0], points[3], points[2]);
+                            DrawTriangle(color_data, points[0], points[1], points[2], Camr, polygon, trnaslationMatrix);
+                            DrawTriangle(color_data, points[0], points[3], points[2], Camr, polygon, trnaslationMatrix);
                         }
                         else
                         {
-                            DrawTriangle(color_data, points[0], points[1], points[2]);
+                            DrawTriangle(color_data, points[0], points[1], points[2], Camr, polygon, trnaslationMatrix);
                         }
                     }
-                    //DrawTriangle(color_data, new Vector4(0,0,0.5f,0), new Vector4(400, 300, 0.5f, 0), new Vector4(400, 100, 0.5f, 0));
-                    //DrawTriangle(Color.Red.ToArgb(), new Vector4(0, 0, 0.5f, 0), new Vector4(400, 300, 0.2f, 0), new Vector4(400, 200, 0.4f, 0));
+                    //DrawTriangle(new Vector4(0,0,0.5f,0), new Vector4(400, 300, 0.5f, 0), new Vector4(400, 100, 0.5f, 0));
+                    //DrawTriangle(new Vector4(0, 0, 0.5f, 0), new Vector4(400, 300, 0.2f, 0), new Vector4(400, 200, 0.4f, 0));
                     for (int i = 0; i < drawing.bitmap.PixelWidth; i++)
                         for (int j = 0; j < drawing.bitmap.PixelHeight; j++)
                         {
@@ -121,48 +126,19 @@ namespace ACGLab
             return (Color.FromArgb((int)(255 * diff), 0,0).ToArgb());
         }
 
-        /*private void DrawLine(int color_data, float x1, float y1,float z1, float x2, float y2, float z2)
+        private void DrawTriangle(int color_data, Vector4 point1, Vector4 point2, Vector4 point3, Vector4 camr, Polygon pol, Matrix4x4 matr)
         {
-            unsafe
-            {
-                int L = (int)Math.Max(Math.Abs(x2 - x1), Math.Abs(y2 - y1));
-                float dx = 0, dy = 0, dz = 0;
-                if (L == 0)
-                {
-                    L = 1;
-                }
-                else
-                {
-                    dx = (x2 - x1) / L;
-                    dy = (y2 - y1) / L;
-                    dz = (z2 - z1) / L;
-                }
-
-                for (int k = 0; k <= L; k++)
-                {
-                    if (x1 > 0 && y1 > 0 && x1 < (int)Grid1.ActualWidth && y1 < (int)Grid1.ActualHeight)
-                    {
-                        if (ZBuffer[(int)((int)x1 * Grid1.ActualHeight + (int)y1)] > z1)
-                        {
-                            Bitmap[(int)((int)x1 * Grid1.ActualHeight + (int)y1)] = color_data;
-                            ZBuffer[(int)((int)x1 * Grid1.ActualHeight + (int)y1)] = z1;
-                        }
-                        
-                    }
-                    x1 += dx;
-                    y1 += dy;
-                    z1 += dz;
-                }
-            }
-        }*/
-        private void DrawTriangle(int color_data, Vector4 point1, Vector4 point2, Vector4 point3)
-        {
-            double ax = point1.X - point2.X;
-            double ay = point1.Y - point2.Y;
-            double bx = point1.X - point3.X;
-            double by = point1.Y - point3.Y;
-            double cz = ax * by - ay * bx;
-            if (cz >= 0)
+            var a0 = Vector4.Transform(pol.Vertices[0].ToVector(), matr) -
+                 Vector4.Transform(pol.Vertices[1].ToVector(), matr);
+            var b0 = Vector4.Transform(pol.Vertices[2].ToVector(), matr) -
+                Vector4.Transform(pol.Vertices[0].ToVector(), matr);
+            Vector3 vector1 = new Vector3(a0.X, a0.Y, a0.Z);
+            Vector3 vector2 = new Vector3(b0.X, b0.Y, b0.Z);
+            var norm = Vector3.Cross(vector1, vector2);
+            Vector4 cam = Vector4.Transform(pol.Vertices[0].ToVector(), matr) - camr;
+            Vector3 vector = new Vector3(cam.X, cam.Y, cam.Z);
+            var d0 = Vector3.Dot(norm, vector);
+            if (d0 > 0)
             {
                 Vector4 temp;
                 if (point1.Y == point2.Y && point1.Y == point3.Y)
@@ -217,6 +193,7 @@ namespace ACGLab
                         {
                             if (ZBuffer[idx] >= z)
                             {
+
                                 Bitmap[idx] = color_data;
                                 ZBuffer[idx] = z;
                             }
@@ -224,25 +201,45 @@ namespace ACGLab
                     }
                 }
             }
-            /*float x1 = point1.X, x2 = point2.X, x3 = point3.X, y1 = point1.Y, y2 = point2.Y, y3 = point3.Y, z1 = point1.Z, z2 = point2.Z, z3 = point3.Z;
-            int L = (int)Math.Max(Math.Max(Math.Abs(x1 - x2), Math.Abs(x1 - x3)), Math.Max(Math.Abs(y1 - y2), Math.Abs(y1 - y3)));
-            float dx2 = 0, dy2 = 0, dx3 = 0, dy3 = 0, dz2 = 0, dz3 = 0;
-            dx2 = (x1 - x2) / L;
-            dx3 = (x1 - x3) / L;
-            dy2 = (y1 - y2) / L;
-            dy3 = (y1 - y3) / L;
-            dz2 = (z1 - z2) / L;
-            dz3 = (z1 - z3) / L;
-            for (int i = 0; i <= L; i++)
-            {
-                DrawLine(color_data,x2, y2, z2, x3, y3, z3);
-                x2 += dx2;
-                x3 += dx3;
-                y2 += dy2;
-                y3 += dy3;
-                z2 += dz2;
-                z3 += dz3;
-            }*/
+        }
+
+        private Vector3 GetPointNormal (Vector4 point, Vector4 A, Vector4 B)
+        {
+            A -= point;
+            B -= point;
+            return new Vector3(A.Y*B.Z - A.Z*B.Y, A.Z*B.X -A.X*B.Z, A.X*B.Y-A.Y*B.X);
+        }
+
+        private int CalcColorByFongo (Vector3 point, Vector3 pointNormal, Vector3 light)
+        {
+            Vector3 diffuseAndAmbientKoef = new Vector3(5, 5, 5);
+            Vector3 specularKoef = new Vector3(1, 1, 1);
+            var ambientLightColor = new Vector3(3F, 1F, 3F) * (diffuseAndAmbientKoef / 20f);
+            var diffuzeKoefL = 4f;
+            var specularKoefL = 2.2f;
+            var diffuseColor = new Vector3(30F, 30F, 25F);
+            var specularColor = new Vector3(255F, 255F, 255F);
+            Vector3 lightDirection = light - point;
+            Vector3 L = Vector3.Normalize(lightDirection);
+            Vector3 N = Vector3.Normalize(pointNormal);
+            float lambertComponent = (float)diffuzeKoefL * Math.Max(Vector3.Dot(N, L), 0);
+            Vector3 diffuseLight = (diffuseAndAmbientKoef / 10f) * diffuseColor * lambertComponent;
+            Vector3 eyeDirection = new Vector3(CamPos.X, CamPos.Y, CamPos.Z) - point;
+            Vector3 eyeVector = Vector3.Normalize(eyeDirection);
+
+            Vector3 E = Vector3.Normalize(eyeVector);
+            Vector3 R = Vector3.Reflect(-L, N);
+
+            float specular = specularKoefL * (float)Math.Pow(Math.Max(Vector3.Dot(R, E), 0), 30f);
+            Vector3 specularLight = specularColor * specular;
+            specularLight *= specularKoef / 10F;
+
+            Vector3 sumColor = ambientLightColor;
+            sumColor += diffuseLight;
+            sumColor += specularLight;
+
+            return Color.FromArgb((byte)Math.Min(sumColor.X, 255), (byte)Math.Min(sumColor.Y, 255), (byte)Math.Min(sumColor.Z, 255)).ToArgb();
+           
         }
         private void Canvas_MouseWheel(object sender, MouseWheelEventArgs e)
         {

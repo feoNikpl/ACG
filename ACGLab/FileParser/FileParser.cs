@@ -122,8 +122,11 @@ namespace ACGLab.FileParser
                             var vertN = new List<VertexNormal>();
                             for (int i = 0; i < f.Length; i++)
                             {
-                                vert.Add(vertices[f[i][0] - 1]);
-                                vertN.Add(verticesNormal[f[i][2] - 1]);
+                                if (f[i].Length >= 2)
+                                {
+                                    vert.Add(vertices[f[i][0] - 1]);
+                                    vertN.Add(verticesNormal[f[i][2] - 1]);
+                                }
                                 
                                 if(vert.Count > 4)
                                 {
