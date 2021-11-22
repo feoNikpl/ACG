@@ -8,12 +8,10 @@ namespace ACGLab.Model
     public class DrawingObject
     {
         public List<Polygon> Instance;
-        public Vector3 GeometricCenter;
 
-        public DrawingObject(List<Polygon> instance, Vector3 geometricCenter)
+        public DrawingObject(List<Polygon> instance)
         {
             Instance = instance;
-            GeometricCenter = geometricCenter;
         }
     }
 }

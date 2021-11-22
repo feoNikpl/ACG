@@ -18,7 +18,6 @@ namespace ACGLab.FileParser
 
             string l;
             int skip = 1;
-            double maxX = 0, maxY = 0, maxZ = 0;
 
             using (var reader = new StreamReader(filePath, Encoding.UTF8))
             {
@@ -27,7 +26,7 @@ namespace ACGLab.FileParser
                     lines.Add(reader.ReadLine());
                 }
             }
-            
+
             foreach (string line in lines)
             {
                 skip = 1;
@@ -64,18 +63,6 @@ namespace ACGLab.FileParser
                                     break;
                                 default:
                                     break;
-                            }
-                            if (maxX < v[0])
-                            {
-                                maxX = v[0];
-                            }
-                            if (maxY < v[1])
-                            {
-                                maxY = v[1];
-                            }
-                            if (maxZ < v[2])
-                            {
-                                maxZ = v[2];
                             }
                             break;
                         case "vt":
@@ -128,20 +115,15 @@ namespace ACGLab.FileParser
                                     vertN.Add(verticesNormal[f[i][2] - 1]);
                                 }
                                 
-                                if(vert.Count > 4)
-                                {
-                                    int k = 0;
-                                }
                             }
-                            instance.Add(new Polygon(vert,vertN));
+                            instance.Add(new Polygon(vert, vertN));
                             break;
                         default:
                             break;
                     }
                 }
             }
-            
-            return new DrawingObject(instance, new System.Numerics.Vector3((float)maxX/2, (float)maxY /2, (float)maxZ /2));
+            return new DrawingObject(instance);
         }
     }
 }
