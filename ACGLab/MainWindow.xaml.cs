@@ -20,12 +20,12 @@ namespace ACGLab
     /// </summary>
     public partial class MainWindow : Window
     {
-        public DrawingObject drawingObject = FileParser.FileParser.ParseFile("radio.obj");
+        public DrawingObject drawingObject = FileParser.FileParser.ParseFile("C.obj");
         float Zoom = 0.5f;
         int X = 0, Y = 0, Z = 0;
         float Ox = 0, Oy = 0, Oz = 0;
         float CameraSpeed = 100.0f;
-        Vector3 LightTarget = new Vector3(500.0f, 500.0f, -200.0f);
+        Vector3 LightTarget = new Vector3(1000.0f, 1000.0f, 1000.0f);
         Vector3 CamPos = new Vector3(0.0f, 10.0f, 45.0f), CamTarget = new Vector3(0.0f, 0.0f, 1.0f), CamUp = new Vector3(0.0f, 1.0f, 0.0f);
         Vector3 origlightPoint = new Vector3(-1.08f, -1.26f, 45f);
         int[] Bitmap;
@@ -54,6 +54,7 @@ namespace ACGLab
             Bitmap = Enumerable.Repeat(backColor, Bitmap.Length).ToArray();
             ZBuffer = Enumerable.Repeat(float.MaxValue, ZBuffer.Length).ToArray();
             Matrix4x4 trnaslationMatrix = Transformation.Transformation.GetTranslationMatrix(Zoom, X, Y, Z, Ox, Oy, Oz);
+            Matrix4x4 camMatrix =Transformation.Transformation.GetCamMatrix(CamPos, CamTarget, CamUp, Zoom, X, Y, Z, Ox, Oy, Oz);
             Matrix4x4 viewport = Transformation.Transformation.GetViewportMatrix(Grid1.ActualWidth, Grid1.ActualHeight);
             Matrix4x4 transformMatrix = Transformation.Transformation.GetTransformationMatrix(CamPos, CamTarget, CamUp, Grid1.ActualWidth, Grid1.ActualHeight, 1f, 100.0f, Zoom, X, Y, Z, Ox, Oy, Oz);
             try
@@ -67,6 +68,7 @@ namespace ACGLab
                     {
                         List<Vector4> points = new List<Vector4>();
                         List<Vector4> normals = new List<Vector4>();
+                        List<Vector4> pointsCam = new List<Vector4>();
                         Vector4 point, normal;
                         for (int i = 0; i < polygon.Vertices.Count; i++)
                         {
@@ -75,17 +77,19 @@ namespace ACGLab
                             points.Add(Vector4.Transform(point, viewport));
 
                             normals.Add(Vector4.Transform(polygon.VerticesNormal[i].ToVector(), trnaslationMatrix));
+
+                            pointsCam.Add(Vector4.Transform(polygon.Vertices[i].ToVector(), camMatrix));
                         }
                         //color_data = CalcColor(points, normals, new Vector4(LightTarget, 1));
                         Vector4 Camr = new Vector4(CamPos, 1);
                         if (polygon.Vertices.Count > 3)
                         {
-                            DrawTriangle(color_data, points[0], points[1], points[2], Camr, polygon, trnaslationMatrix, normals);
-                            DrawTriangle(color_data, points[0], points[3], points[2], Camr, polygon, trnaslationMatrix, new List<Vector4> { normals[0], normals[3], normals[2]});
+                            DrawTriangle(color_data, points[0], points[1], points[2], Camr, polygon, trnaslationMatrix, normals, pointsCam);
+                            DrawTriangle(color_data, points[0], points[3], points[2], Camr, polygon, trnaslationMatrix, new List<Vector4> { normals[0], normals[3], normals[2]}, new List<Vector4> { pointsCam[0], pointsCam[3], pointsCam[2] });
                         }
                         else
                         {
-                            DrawTriangle(color_data, points[0], points[1], points[2], Camr, polygon, trnaslationMatrix, normals);
+                            DrawTriangle(color_data, points[0], points[1], points[2], Camr, polygon, trnaslationMatrix, normals, pointsCam);
                         }
                     }
                     for (int i = 0; i < drawing.bitmap.PixelWidth; i++)
@@ -121,7 +125,7 @@ namespace ACGLab
             return (Color.FromArgb((int)(255 * diff), 0,0).ToArgb());
         }
 
-        private void DrawTriangle(int color_data, Vector4 point1, Vector4 point2, Vector4 point3, Vector4 camr, Polygon pol, Matrix4x4 matr,List <Vector4> normals)
+        private void DrawTriangle(int color_data, Vector4 point1, Vector4 point2, Vector4 point3, Vector4 camr, Polygon pol, Matrix4x4 matr,List <Vector4> normals, List<Vector4> pointsCam)
         {
             var a0 = Vector4.Transform(pol.Vertices[0].ToVector(), matr) -
                  Vector4.Transform(pol.Vertices[1].ToVector(), matr);
@@ -148,6 +152,9 @@ namespace ACGLab
                     temp = normals[0];
                     normals[0] = normals[1];
                     normals[1] = temp;
+                    temp = pointsCam[0];
+                    pointsCam[0] = pointsCam[1];
+                    pointsCam[1] = temp;
                 }
                 if (point1.Y > point3.Y)
                 {
@@ -157,6 +164,9 @@ namespace ACGLab
                     temp = normals[0];
                     normals[0] = normals[2];
                     normals[2] = temp;
+                    temp = pointsCam[0];
+                    pointsCam[0] = pointsCam[2];
+                    pointsCam[2] = temp;
                 }
                 if (point2.Y > point3.Y)
                 {
@@ -166,6 +176,9 @@ namespace ACGLab
                     temp = normals[1];
                     normals[1] = normals[2];
                     normals[2] = temp;
+                    temp = pointsCam[1];
+                    pointsCam[1] = pointsCam[2];
+                    pointsCam[2] = temp;
                 }
                 point3.Y += 1;
                 point1.Y -= 1;
@@ -184,6 +197,10 @@ namespace ACGLab
                     Vector4 bN = secondHalf
                             ? normals[1] + (normals[2] - normals[1]) * (float)beta
                             : normals[0] + (normals[1] - normals[0]) * (float)beta;
+                    Vector4 aP = pointsCam[0] + (pointsCam[2] - pointsCam[0]) * (float)alpha;
+                    Vector4 bP = secondHalf
+                            ? pointsCam[1] + (pointsCam[2] - pointsCam[1]) * (float)beta
+                            : pointsCam[0] + (pointsCam[1] - pointsCam[0]) * (float)beta;
 
                     if (a.X > b.X)
                     {
@@ -193,6 +210,9 @@ namespace ACGLab
                         temp = aN;
                         aN = bN;
                         bN = temp;
+                        temp = aP;
+                        aP = bP;
+                        bP = temp;
                     }
                     for (int j = (int)a.X; j <= b.X; j++)
                     {
@@ -202,15 +222,25 @@ namespace ACGLab
                         float z = (float)(a.Z + (b.Z - a.Z) * phi);
                         float zN = (float)(aN.Z + (bN.Z - aN.Z) * phi);
                         float xN = (float)(aN.X + (bN.X - aN.X) * phi);
+                        float zP = (float)(aP.Z + (bP.Z - aP.Z) * phi);
+                        float xP = (float)(aP.X + (bP.X - aP.X) * phi);
                         int idx = (int)(j * Grid1.ActualHeight + point1.Y + i);
                         if (j > 0 && point1.Y + i > 0 && j < (int)Grid1.ActualWidth && point1.Y + i < (int)Grid1.ActualHeight)
                         {
                             if (ZBuffer[idx] >= z)
                             {
                                 //Bitmap[idx] = color_data;
-                                Bitmap[idx] = CalcColorByFongo(new Vector3(j, point1.Y + i, z),
-                                                                new Vector3 (xN, aN.Y, zN),
-                                                                LightTarget);
+                                if(new Vector3(j, point1.Y + i, z) == new Vector3(a.X, a.Y, a.Z) || new Vector3(j, point1.Y + i, z) == new Vector3(b.X, b.Y, b.Z))
+                                    Bitmap[idx] = (int)(0.5f*CalcColorByFongo(new Vector3(j, point1.Y + i, z),
+                                                                    new Vector3 (xN, aN.Y, zN),
+                                                                    LightTarget,
+                                                                    new Vector3(xP, aP.Y, zP)));
+                                else
+                                    Bitmap[idx] = CalcColorByFongo(new Vector3(j, point1.Y + i, z),
+                                                                    new Vector3(xN, aN.Y, zN),
+                                                                    LightTarget,
+                                                                    new Vector3(xP, aP.Y, zP));
+
                                 /*Bitmap[idx] = CalcColorByFongo(new Vector3(j, point1.Y + i, z),
                                                                 norm,
                                                                 LightTarget);*/
@@ -229,7 +259,7 @@ namespace ACGLab
             //return new Vector3(A.Y*B.Z - A.Z*B.Y, A.Z*B.X -A.X*B.Z, A.X*B.Y-A.Y*B.X);
         }
 
-        private int CalcColorByFongo (Vector3 point, Vector3 pointNormal, Vector3 light)
+        private int CalcColorByFongo (Vector3 point, Vector3 pointNormal, Vector3 light, Vector3 pointCam)
         {
 
             var MColor = new Vector3(255f, 255f, 255f);
@@ -240,7 +270,7 @@ namespace ACGLab
             Vector3 diffuseLight = 0.2f *Math.Max(Vector3.Dot(N, L),-Vector3.Dot(N, L)) * MColor;
 
             var specularColor = new Vector3(255F, 255F, 255F);
-            Vector3 eyeDirection = new Vector3(0, 0, 0) - point;
+            Vector3 eyeDirection = new Vector3(0, 0, 0) - pointCam;
             Vector3 eyeVector = Vector3.Normalize(eyeDirection);
 
             Vector3 E = Vector3.Normalize(eyeVector);
@@ -249,7 +279,7 @@ namespace ACGLab
             {
                 MColor = new Vector3(255f, 255f, 255f);
             }
-            float specular = 0.2f * (float)Math.Pow(Math.Max(Vector3.Dot(R, E), 0f), 30f);
+            float specular = 1f * (float)Math.Pow(Math.Max(Vector3.Dot(R, E), 0f), 50f);
             Vector3 specularLight = specularColor * specular;
             Vector3 sumColor;
             sumColor = ambientLightColor;
@@ -270,9 +300,9 @@ namespace ACGLab
             {
                 if (e.Delta < 0)
                 {
-                    if (Zoom > 0.5f)
+                    if (Zoom > 0.1f)
                     {
-                        Zoom -= 0.5f;
+                        Zoom -= 0.2f;
                     }
                 }
             }

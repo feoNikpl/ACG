@@ -29,6 +29,11 @@ namespace ACGLab.Transformation
             return Matrix4x4.Transpose(new Matrix4x4((float)width / 2, 0, 0, (float)width / 2, 0, (float)-height / 2, 0, (float)height / 2, 0, 0, 1, 0, 0, 0, 0, 1));
         }
 
+        public static Matrix4x4 GetCamMatrix(Vector3 camPos, Vector3 camTarget, Vector3 camUp, float zoom, int x, int y, int z, float ox, float oy, float oz)
+        {
+            return GetTranslationMatrix( zoom, x, y, z, ox, oy, oz) *
+                Matrix4x4.CreateLookAt(camPos, camTarget, camUp);
+        }
         public static Matrix4x4 GetTranslationMatrix(float zoom, int x, int y, int z, float ox, float oy, float oz)
         {
             return Matrix4x4.CreateScale(zoom) *
